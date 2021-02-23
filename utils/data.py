@@ -11,6 +11,7 @@ import torch
 import torch.utils.data as data
 from PIL import Image
 import pickle
+import numpy as np
 
 
 def data_from_pkl(pkl_path):
@@ -25,16 +26,17 @@ class CVPPP(data.Dataset):
     CVPPP_pickle_file = "./data/CVPPP/CVPPP_img_lbl_dict.pkl"
 
     def __init__(self, root, train=True, transform=None):
-        """Init MNIST-M dataset."""
+        """Init CVPPP dataset."""
         # toclarify: do we need this parent initialization? tut7 doesn't have it? Verify later.
         super(CVPPP, self).__init__()
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.train = train  # training set or test set
 
-        # if not self._check_exists():
-        #     raise RuntimeError("Dataset not found." +
-        #                        " You can use download CVPPP to data folder")
+        if not self._check_exists():
+            print(f"Dataset CVPPP not found at {CVPPP_pickle_file}")
+            raise RuntimeError("Dataset not found." +
+                               " You can use download CVPPP to data folder")
 
         # TODO: split data to train and test based on the train param input
         # Now all data are used for training/valid
@@ -61,7 +63,7 @@ class CVPPP(data.Dataset):
         img, target = self.train_data[index], self.train_labels[index]
 
         if self.transform != None:
-            img = self.transform(Image.fromarray((x*255).astype(np.uint8)))
+            img = self.transform(Image.fromarray((img*255).astype(np.uint8)))
 
         return img, target
 
@@ -73,7 +75,72 @@ class CVPPP(data.Dataset):
             return len(self.test_data)
 
     def _check_exists(self):
-        path = os.path.join(self.root, self.CVPPP_pickle_file)
+        #path = os.path.join(self.root, self.CVPPP_pickle_file)
+        path = self.CVPPP_pickle_file
+        #print(f"dataset file path {path}")
+        return os.path.exists(path)
+
+
+class KOMATSUNA(data.Dataset):
+    """Komatsuna Leaf counting Dataset."""
+    KOMATSUNA_images_file = "./data/KOMATSUNA/komatsuna_ds.pkl"
+    KOMATSUNA_label_file = "./data/KOMATSUNA/komatsuna_lbl.pkl"
+
+    def __init__(self, root, train=True, transform=None):
+        """Init KOMATSUNA dataset."""
+        # toclarify: do we need this parent initialization? Verify later.
+        super(KOMATSUNA, self).__init__()
+        self.root = os.path.expanduser(root)
+        self.transform = transform
+        self.train = train  # training set or test set
+
+        if not self._check_exists():
+            raise RuntimeError("Dataset not found." +
+                               " You can use download CVPPP to data folder")
+
+        # TODO: split data to train and test based on the train param input
+        # Now all data are used for training/valid
+
+        #----------Loading Data from Pickle--------------#
+        # This dataset is slightly different from CVPPP (without density labels)
+        self.images_dict = data_from_pkl(self.KOMATSUNA_images_file)
+        self.images_keys = list(self.images_dict.keys())
+        self.labels_dict = data_from_pkl(self.KOMATSUNA_label_file)
+
+        self.train_data = []
+        self.train_labels = []
+
+        for key in self.images_keys:
+            self.train_data.append(self.images_dict[key])
+            # key in images dict: 'rgb_04_009_00'
+            # key in label dict: 'label_04_009_00'
+            key = "label" + key[3:]
+            self.train_labels.append(self.labels_dict[key])
+
+    def __getitem__(self, index):
+        """Get images and target for data loader.
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+
+        img, target = self.train_data[index], self.train_labels[index]
+
+        if self.transform != None:
+            img = self.transform(Image.fromarray((img*255).astype(np.uint8)))
+
+        return img, target
+
+    def __len__(self):
+        """Return size of dataset."""
+        if self.train:
+            return len(self.train_data)
+        else:
+            return len(self.test_data)
+
+    def _check_exists(self):
+        path = self.KOMATSUNA_images_file
         print(f"dataset file path {path}")
         return os.path.exists(path)
 
