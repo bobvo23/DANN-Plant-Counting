@@ -127,3 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Torch checkpoint
+*.pth
+*.pt
+
+#checkpoints and model saving
+saved/
+
+#data
+data/
+
+#vscode workspace
+*.code-workspace

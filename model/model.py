@@ -84,9 +84,9 @@ class MnistAdapt(BaseModel):
 
         features = self.feature_extractor(x)
         features = features.view(-1, self.num_cnn_features)
-        #features_grl = GradientReversalFn.apply(features, λ)
+        features_grl = GradientReversalFn.apply(features, λ)
         # classify on regular features
         class_pred = self.class_classifier(features)
-        #domain_pred = self.domain_classifier(features_grl)
+        domain_pred = self.domain_classifier(features_grl)
         # classify on features after GRL
-        return class_pred  # , domain_pred
+        return class_pred, domain_pred

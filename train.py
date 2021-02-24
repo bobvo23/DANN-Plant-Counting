@@ -2,7 +2,7 @@ import argparse
 import collections
 import torch
 import numpy as np
-import data_loader.data_loaders as module_data
+import data_loader.data_loaders as DataLoader
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
@@ -24,8 +24,12 @@ def main(config):
     device, _ = prepare_device(config['n_gpu'])
 
     # setup data_loader instances with MNIST
-    data_loader = config.init_obj('data_loader', module_data)
-    valid_data_loader = data_loader.split_validation()
+    data_loader_source = config.init_obj('data_loader_MNIST', DataLoader)
+    valid_data_loader_source = data_loader_source.split_validation()
+
+    # setup data_loader instances with MNIST
+    data_loader_target = config.init_obj('data_loader_MNISTM', DataLoader)
+    valid_data_loader_target = data_loader_target.split_validation()
 
     # build model architecture, then print to console
     model = config.init_obj('MNIST_arch', module_arch)
@@ -37,7 +41,8 @@ def main(config):
     model = model.to(device)
 
     # get function handles of loss and metrics
-    criterion = getattr(module_loss, config['classification_loss'])
+    loss_fn_class = getattr(module_loss, config['class_loss'])
+    loss_fn_domain = getattr(module_loss, config['domain_loss'])
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
@@ -46,11 +51,17 @@ def main(config):
     lr_scheduler = config.init_obj(
         'lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
-    trainer = Trainer(model, criterion, metrics, optimizer,
+    trainer = Trainer(model=model,
+                      loss_fn_class=loss_fn_class,
+                      loss_fn_domain=loss_fn_domain,
+                      metric_ftns=metrics,
+                      optimizer=optimizer,
                       config=config,
                       device=device,
-                      data_loader=data_loader,
-                      valid_data_loader=valid_data_loader,
+                      data_loader_source=data_loader_source,
+                      valid_data_loader_source=valid_data_loader_source,
+                      data_loader_target=data_loader_target,
+                      valid_data_loader_target=valid_data_loader_target,
                       lr_scheduler=lr_scheduler)
 
     trainer.train()

@@ -10,23 +10,35 @@ class Trainer(BaseTrainer):
     Trainer class
     """
 
-    def __init__(self, model, criterion, metric_ftns, optimizer, config, device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None):
-        super().__init__(model, criterion, metric_ftns, optimizer, config)
+    def __init__(self, model, loss_fn_class, loss_fn_domain, metric_ftns, optimizer, config, device,
+                 data_loader_source, valid_data_loader_source=None, data_loader_target=None,
+                 valid_data_loader_target=None, lr_scheduler=None, len_epoch=None):
+        super().__init__(model, metric_ftns, optimizer, config)
         self.config = config
         self.device = device
-        self.data_loader = data_loader
+        self.loss_fn_class = loss_fn_class
+        self.loss_fn_domain = loss_fn_domain
+        self.data_loader_source = data_loader_source
+        self.valid_data_loader_source = valid_data_loader_source
+        self.data_loader_target = data_loader_target
+        self.valid_data_loader_target = valid_data_loader_target
+
         if len_epoch is None:
             # epoch-based training
-            self.len_epoch = len(self.data_loader)
+            self.len_epoch = min(len(self.data_loader_source),
+                                 len(self.data_loader_target))
         else:
+            # FIXME: implement source/target style training or remove this feature
             # iteration-based training
             self.data_loader = inf_loop(data_loader)
             self.len_epoch = len_epoch
-        self.valid_data_loader = valid_data_loader
-        self.do_validation = self.valid_data_loader is not None
+        # FIXME: handle validation round
+        self.do_validation = None
+        # self.valid_data_loader = valid_data_loader
+        #self.do_validation = self.valid_data_loader is not None
+
         self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(data_loader.batch_size))
+        self.log_step = int(np.sqrt(self.data_loader_source.batch_size))
 
         self.train_metrics = MetricTracker(
             'loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
@@ -44,19 +56,50 @@ class Trainer(BaseTrainer):
         self.model.train()
         # Reset all metric in metric dataframe
         self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(self.data_loader):
-            data, target = data.to(self.device), target.to(self.device)
+        batch_idx = 0
+        for source, target in zip(self.data_loader_source, self.data_loader_target):
+            # source = torch.as_tensor(source)
+            # target = torch.as_tensor(target)
+
+            # source, target = source.to(self.device), target.to(self.device)
+
+            # Calculate training progress and GRL λ
+            p = float(batch_idx + (epoch-1) * self.len_epoch) / \
+                (self.epochs * self.len_epoch)
+            λ = 2. / (1. + np.exp(-10 * p)) - 1
+
+            # === Train on source domain
+            X_source, y_source = source
+            # generate source domain labels: 0
+            y_s_domain = torch.zeros(X_source.shape[0], dtype=torch.long)
+
+            class_pred_source, domain_pred_source = self.model(X_source, λ)
+            # source classification loss
+            loss_s_label = self.loss_fn_class(class_pred_source, y_source)
+            loss_s_domain = self.loss_fn_domain(
+                domain_pred_source, y_s_domain)  # source domain loss (via GRL)
+
+            # === Train on target domain
+            X_target, _ = target
+            # generate source domain labels: 0
+            y_t_domain = torch.ones(X_target.shape[0], dtype=torch.long)
+
+            _, domain_pred_target = self.model(X_target, λ)
+            loss_t_domain = self.loss_fn_domain(
+                domain_pred_target, y_t_domain)  # source domain loss (via GRL)
+
+            # === Optimizer ====
 
             self.optimizer.zero_grad()
-            output = self.model(data)
-            loss = self.criterion(output, target)
+            loss = loss_t_domain + loss_s_domain + loss_s_label
             loss.backward()
             self.optimizer.step()
 
-            self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+            self.writer.set_step((epoch-1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
-                self.train_metrics.update(met.__name__, met(output, target))
+                self.train_metrics.update(
+                    met.__name__, met(class_pred_source, y_source))
 
             if batch_idx % self.log_step == 0:
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
@@ -64,13 +107,15 @@ class Trainer(BaseTrainer):
                     self._progress(batch_idx),
                     loss.item()))
                 self.writer.add_image('input', make_grid(
-                    data.cpu(), nrow=8, normalize=True))
+                    X_source.cpu(), nrow=8, normalize=True))
 
+            batch_idx += 1
             if batch_idx == self.len_epoch:
                 break
         # Average the accumulated result to log the result
         log = self.train_metrics.result()
-
+        # update lambda value to metric tracker
+        log["lambda"] = λ
         # Run validation after each epoch if validation dataloader is available.
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
@@ -107,7 +152,7 @@ class Trainer(BaseTrainer):
                     self.valid_metrics.update(
                         met.__name__, met(output, target))
                 self.writer.add_image('input', make_grid(
-                    data.cpu(), nrow=8, normalize=True))
+                    X_source.cpu(), nrow=4, normalize=True))
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
@@ -116,9 +161,9 @@ class Trainer(BaseTrainer):
 
     def _progress(self, batch_idx):
         base = '[{}/{} ({:.0f}%)]'
-        if hasattr(self.data_loader, 'n_samples'):
-            current = batch_idx * self.data_loader.batch_size
-            total = self.data_loader.n_samples
+        if hasattr(self.data_loader_source, 'n_samples'):
+            current = batch_idx * self.data_loader_source.batch_size
+            total = self.data_loader_source.n_samples
         else:
             current = batch_idx
             total = self.len_epoch

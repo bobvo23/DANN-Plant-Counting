@@ -1,5 +1,5 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "Mnist_Adapt",
     "SOURCE_DATA": "/mnt/c/Users/PC/Documents/GitHub/Dataset/CVPPP_img_lbl_dict.pkl",
     "TARGET_DATA": "/mnt/c/Users/PC/Documents/GitHub/Dataset/komatsuna_ds.pkl",
     "n_gpu": 0,
@@ -7,7 +7,37 @@
         "type": "MnistAdapt",
         "args": {}
     },
-    "data_loader": {
+    "data_loader_CVPPP": {
+        "type": "CVPPP_DataLoader",
+        "args": {
+            "data_dir": "data/",
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.1,
+            "num_workers": 2
+        }
+    },
+    "data_loader_KOMATSUNA": {
+        "type": "KOMATSUNA_DataLoader",
+        "args": {
+            "data_dir": "data/",
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.1,
+            "num_workers": 2
+        }
+    },
+    "data_loader_MNISTM": {
+        "type": "Mnist_M_DataLoader",
+        "args": {
+            "data_dir": "data/",
+            "batch_size": 128,
+            "shuffle": true,
+            "validation_split": 0.1,
+            "num_workers": 2
+        }
+    },
+    "data_loader_MNIST": {
         "type": "MnistDataLoader",
         "args": {
             "data_dir": "data/",
@@ -25,7 +55,9 @@
             "amsgrad": true
         }
     },
-    "classification_loss": "nll_loss",
+    "density_loss": "nll_loss",
+    "class_loss": "nll_loss",
+    "domain_loss": "nll_loss",
     "metrics": [
         "accuracy",
         "top_k_acc"
@@ -38,11 +70,11 @@
         }
     },
     "trainer": {
-        "epochs": 2,
+        "epochs": 20,
         "save_dir": "saved/",
-        "save_period": 1,
+        "save_period": 2,
         "verbosity": 2,
-        "monitor": "min val_loss",
+        "monitor": "off",
         "early_stop": 10,
         "tensorboard": true
     }
