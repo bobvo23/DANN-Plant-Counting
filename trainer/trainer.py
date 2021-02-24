@@ -86,7 +86,8 @@ class Trainer(BaseTrainer):
             X_target, _ = target
             # generate source domain labels: 0
             y_t_domain = torch.ones(X_target.shape[0], dtype=torch.long)
-
+            X_target = X_target.to(self.device)
+            y_t_domain = y_t_domain.to(self.device)
             _, domain_pred_target = self.model(X_target, λ)
             loss_t_domain = self.loss_fn_domain(
                 domain_pred_target, y_t_domain)  # source domain loss (via GRL)
