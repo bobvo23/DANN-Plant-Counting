@@ -22,6 +22,7 @@ class Trainer(BaseTrainer):
         self.valid_data_loader_source = valid_data_loader_source
         self.data_loader_target = data_loader_target
         self.valid_data_loader_target = valid_data_loader_target
+        self.model.to(self.device)
 
         if len_epoch is None:
             # epoch-based training
@@ -58,8 +59,6 @@ class Trainer(BaseTrainer):
         self.train_metrics.reset()
         batch_idx = 0
         for source, target in zip(self.data_loader_source, self.data_loader_target):
-            # source = torch.as_tensor(source)
-            # target = torch.as_tensor(target)
 
             # source, target = source.to(self.device), target.to(self.device)
 
@@ -70,8 +69,12 @@ class Trainer(BaseTrainer):
 
             # === Train on source domain
             X_source, y_source = source
+            X_source, y_source = X_source.to(
+                self.device), y_source.to(self.device)
+
             # generate source domain labels: 0
             y_s_domain = torch.zeros(X_source.shape[0], dtype=torch.long)
+            y_s_domain = y_s_domain.to(self.device)
 
             class_pred_source, domain_pred_source = self.model(X_source, λ)
             # source classification loss
