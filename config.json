@@ -2,7 +2,7 @@
     "name": "Mnist_Adapt",
     "SOURCE_DATA": "/mnt/c/Users/PC/Documents/GitHub/Dataset/CVPPP_img_lbl_dict.pkl",
     "TARGET_DATA": "/mnt/c/Users/PC/Documents/GitHub/Dataset/komatsuna_ds.pkl",
-    "n_gpu": 0,
+    "n_gpu": 1,
     "MNIST_arch": {
         "type": "MnistAdapt",
         "args": {}
@@ -70,7 +70,7 @@
         }
     },
     "trainer": {
-        "epochs": 20,
+        "epochs": 1,
         "save_dir": "saved/",
         "save_period": 2,
         "verbosity": 2,
