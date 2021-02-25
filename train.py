@@ -42,15 +42,15 @@ def main(config):
 
     # get function handles of loss and metrics
     loss_fn_class = getattr(module_loss, config['density_loss'])
-    loss_fn_domain = getattr(module_loss, config['bce_loss'])
+    loss_fn_domain = getattr(module_loss, config['domain_loss'])
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     #trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = config.init_obj('optimizer_CVPPP', torch.optim, [
-        {'params': counter_model.upsample.parameters(), 'lr': 1e-3},
-        {'params': counter_model.downsample.parameters(), 'lr': 1e-3},
-        {'params': counter_model.adapt.parameters(), 'lr': 1e-4},
+        {'params': model.upsample.parameters(), 'lr': 1e-3},
+        {'params': model.downsample.parameters(), 'lr': 1e-3},
+        {'params': model.adapt.parameters(), 'lr': 1e-4},
     ])
     lr_scheduler = config.init_obj(
         'lr_scheduler', torch.optim.lr_scheduler, optimizer)

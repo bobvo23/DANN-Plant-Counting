@@ -42,9 +42,9 @@ class Trainer(BaseTrainer):
         self.log_step = int(np.sqrt(self.data_loader_source.batch_size))
 
         self.train_metrics = MetricTracker(
-            'loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+            'loss', 'class_loss', 'domain_loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker(
-            'loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+            'loss', 'class_loss', 'domain_loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
 
     def _train_epoch(self, epoch):
         """
@@ -73,22 +73,28 @@ class Trainer(BaseTrainer):
                 self.device), y_source.to(self.device)
 
             # generate source domain labels: 0
-            y_s_domain = torch.zeros(X_source.shape[0], dtype=torch.long)
+            y_s_domain = torch.zeros(X_source.shape[0], dtype=torch.float32)
             y_s_domain = y_s_domain.to(self.device)
 
             class_pred_source, domain_pred_source = self.model(X_source, λ)
             # source classification loss
-            loss_s_label = self.loss_fn_class(class_pred_source, y_source)
+            loss_s_label = self.loss_fn_class(
+                class_pred_source.squeeze(), y_source)
+
+            # Compress from tensor size batch*1*1*1 => batch
+            domain_pred_source = torch.squeeze(domain_pred_source)
             loss_s_domain = self.loss_fn_domain(
                 domain_pred_source, y_s_domain)  # source domain loss (via GRL)
 
             # === Train on target domain
             X_target, _ = target
             # generate source domain labels: 0
-            y_t_domain = torch.ones(X_target.shape[0], dtype=torch.long)
+            y_t_domain = torch.ones(X_target.shape[0], dtype=torch.float32)
             X_target = X_target.to(self.device)
             y_t_domain = y_t_domain.to(self.device)
             _, domain_pred_target = self.model(X_target, λ)
+
+            domain_pred_target = torch.squeeze(domain_pred_target)
             loss_t_domain = self.loss_fn_domain(
                 domain_pred_target, y_t_domain)  # source domain loss (via GRL)
 
@@ -96,22 +102,23 @@ class Trainer(BaseTrainer):
 
             self.optimizer.zero_grad()
             loss = loss_t_domain + loss_s_domain + loss_s_label
+
             loss.backward()
             self.optimizer.step()
 
             self.writer.set_step((epoch-1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
+            self.train_metrics.update('class_loss', loss_s_label.item())
+            self.train_metrics.update('domain_loss', loss_s_domain.item())
             for met in self.metric_ftns:
                 self.train_metrics.update(
                     met.__name__, met(class_pred_source, y_source))
 
             if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()))
+                self.logger.debug(
+                    f'Train Epoch: {epoch} {self._progress(batch_idx)} Loss: {loss.item():.4f} Source class loss: {loss_s_label.item():3f} Source domain loss {loss_s_domain.item():3f}')
                 self.writer.add_image('input', make_grid(
-                    X_source.cpu(), nrow=8, normalize=True))
+                    X_source.cpu(), nrow=4, normalize=True))
 
             batch_idx += 1
             if batch_idx == self.len_epoch:

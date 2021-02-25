@@ -65,7 +65,7 @@ class CVPPP(data.Dataset):
         if self.transform != None:
             img = self.transform(Image.fromarray((img*255).astype(np.uint8)))
 
-        return img, target
+        return img, torch.Tensor(target)
 
     def __len__(self):
         """Return size of dataset."""
