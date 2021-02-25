@@ -24,15 +24,15 @@ def main(config):
     device, _ = prepare_device(config['n_gpu'])
 
     # setup data_loader instances with MNIST
-    data_loader_source = config.init_obj('data_loader_MNIST', DataLoader)
+    data_loader_source = config.init_obj('data_loader_CVPPP', DataLoader)
     valid_data_loader_source = data_loader_source.split_validation()
 
     # setup data_loader instances with MNIST
-    data_loader_target = config.init_obj('data_loader_MNISTM', DataLoader)
+    data_loader_target = config.init_obj('data_loader_KOMATSUNA', DataLoader)
     valid_data_loader_target = data_loader_target.split_validation()
 
     # build model architecture, then print to console
-    model = config.init_obj('MNIST_arch', module_arch)
+    model = config.init_obj('UNET_ADAPT_arch', module_arch)
 
     logger.info(model)
 
@@ -41,13 +41,17 @@ def main(config):
     model = model.to(device)
 
     # get function handles of loss and metrics
-    loss_fn_class = getattr(module_loss, config['class_loss'])
-    loss_fn_domain = getattr(module_loss, config['domain_loss'])
+    loss_fn_class = getattr(module_loss, config['density_loss'])
+    loss_fn_domain = getattr(module_loss, config['bce_loss'])
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
+    #trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = config.init_obj('optimizer_CVPPP', torch.optim, [
+        {'params': counter_model.upsample.parameters(), 'lr': 1e-3},
+        {'params': counter_model.downsample.parameters(), 'lr': 1e-3},
+        {'params': counter_model.adapt.parameters(), 'lr': 1e-4},
+    ])
     lr_scheduler = config.init_obj(
         'lr_scheduler', torch.optim.lr_scheduler, optimizer)
 

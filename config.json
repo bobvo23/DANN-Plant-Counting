@@ -7,6 +7,10 @@
         "type": "MnistAdapt",
         "args": {}
     },
+    "UNET_ADAPT_arch": {
+        "type": "CountEstimate",
+        "args": {}
+    },
     "data_loader_CVPPP": {
         "type": "CVPPP_DataLoader",
         "args": {
@@ -47,7 +51,7 @@
             "num_workers": 2
         }
     },
-    "optimizer": {
+    "optimizer_MNIST": {
         "type": "Adam",
         "args": {
             "lr": 0.001,
@@ -55,9 +59,17 @@
             "amsgrad": true
         }
     },
-    "density_loss": "nll_loss",
+    "optimizer_CVPPP": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "density_loss": "mse_loss",
     "class_loss": "nll_loss",
-    "domain_loss": "nll_loss",
+    "domain_loss": "bce_loss",
     "metrics": [
         "accuracy",
         "top_k_acc"
