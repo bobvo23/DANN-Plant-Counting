@@ -101,7 +101,7 @@ class Trainer(BaseTrainer):
             # === Optimizer ====
 
             self.optimizer.zero_grad()
-            loss_s_domain = torch.log(loss_s_domain + 1e-9)
+            loss_s_label = torch.log(loss_s_label + 1e-9)
             loss = loss_t_domain + loss_s_domain + loss_s_label
 
             loss.backward()
