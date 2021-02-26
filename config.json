@@ -18,8 +18,7 @@
             "batch_size": 2,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2,
-            "drop_last": true
+            "num_workers": 2
         }
     },
     "data_loader_KOMATSUNA": {
@@ -29,8 +28,7 @@
             "batch_size": 2,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2,
-            "drop_last": true
+            "num_workers": 2
         }
     },
     "data_loader_MNISTM": {
@@ -81,7 +79,7 @@
         }
     },
     "trainer": {
-        "epochs": 1,
+        "epochs": 15,
         "save_dir": "saved/",
         "save_period": 2,
         "verbosity": 2,
