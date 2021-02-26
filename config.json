@@ -15,20 +15,22 @@
         "type": "CVPPP_DataLoader",
         "args": {
             "data_dir": "data/",
-            "batch_size": 128,
+            "batch_size": 2,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 2,
+            "drop_last": true
         }
     },
     "data_loader_KOMATSUNA": {
         "type": "KOMATSUNA_DataLoader",
         "args": {
             "data_dir": "data/",
-            "batch_size": 128,
+            "batch_size": 2,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 2,
+            "drop_last": true
         }
     },
     "data_loader_MNISTM": {
@@ -70,10 +72,7 @@
     "density_loss": "mse_loss",
     "class_loss": "nll_loss",
     "domain_loss": "bce_loss",
-    "metrics": [
-        "accuracy",
-        "top_k_acc"
-    ],
+    "metrics": [],
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
