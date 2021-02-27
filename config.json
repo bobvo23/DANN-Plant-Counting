@@ -83,7 +83,7 @@
         "save_dir": "saved/",
         "save_period": 2,
         "verbosity": 2,
-        "monitor": "off",
+        "monitor": "min val_loss",
         "early_stop": 10,
         "tensorboard": true
     }

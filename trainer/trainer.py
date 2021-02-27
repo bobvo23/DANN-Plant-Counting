@@ -34,9 +34,8 @@ class Trainer(BaseTrainer):
             self.data_loader = inf_loop(data_loader)
             self.len_epoch = len_epoch
         # FIXME: handle validation round
-        self.do_validation = None
-        # self.valid_data_loader = valid_data_loader
-        #self.do_validation = self.valid_data_loader is not None
+        self.valid_data_loader = valid_data_loader
+        self.do_validation = self.valid_data_loader is not None
 
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(self.data_loader_source.batch_size))
@@ -153,9 +152,9 @@ class Trainer(BaseTrainer):
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(self.valid_data_loader):
                 data, target = data.to(self.device), target.to(self.device)
-
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                # ignore labmda value
+                output, _ = self.model(data, 1)
+                loss = self.loss_fn_class(output.squeeze(), target)
 
                 self.writer.set_step(
                     (epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
