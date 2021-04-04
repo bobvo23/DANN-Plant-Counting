@@ -34,11 +34,11 @@ class Trainer(BaseTrainer):
             self.data_loader = inf_loop(data_loader)
             self.len_epoch = len_epoch
         # FIXME: handle validation round
-        self.valid_data_loader = valid_data_loader
+        self.valid_data_loader = valid_data_loader_source
         self.do_validation = self.valid_data_loader is not None
 
         self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(self.data_loader_source.batch_size))
+        self.log_step = 64
 
         self.train_metrics = MetricTracker(
             'loss', 'class_loss', 'domain_loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
@@ -163,7 +163,7 @@ class Trainer(BaseTrainer):
                     self.valid_metrics.update(
                         met.__name__, met(output, target))
                 self.writer.add_image('input', make_grid(
-                    X_source.cpu(), nrow=4, normalize=True))
+                    data.cpu(), nrow=4, normalize=True))
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
