@@ -68,6 +68,6 @@ class KOMATSUNA_DataLoader(BaseDataLoader):
         transform = transforms.Compose([transforms.ToTensor(), transforms.ToPILImage(
         ), transforms.Resize((256, 256)), transforms.ToTensor()])
         self.data_dir = data_dir
-        self.dataset = CVPPP(
-            root='data/CVPPP', train=training, transform=transform)
+        self.dataset = KOMATSUNA(
+            root='data/KOMATSUNA', train=training, transform=transform)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)

@@ -11,9 +11,9 @@ from parse_config import ConfigParser
 def main(config):
     logger = config.get_logger('test')
     # setup data_loader instances
-    data_loader = getattr(module_data, config['data_loader_MNISTM']['type'])(
-        config['data_loader_MNISTM']['args']['data_dir'],
-        batch_size=256,
+    data_loader = getattr(module_data, config['KOMATSUNA_DataLoader']['type'])(
+        config['KOMATSUNA_DataLoader']['args']['data_dir'],
+        batch_size=128,
         shuffle=False,
         validation_split=0.0,
         training=False,
@@ -21,12 +21,12 @@ def main(config):
     )
 
     # build model architecture
-    model = config.init_obj('MNIST_arch', module_arch)
+    model = config.init_obj('UNET_ADAPT_arch', module_arch)
     logger.info(data_loader)
     logger.info(model)
 
     # get function handles of loss and metrics
-    loss_fn = getattr(module_loss, config['class_loss'])
+    loss_fn = getattr(module_loss, config['density_loss'])
 
     metric_fns = [getattr(module_metric, met) for met in config['metrics']]
 
