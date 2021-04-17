@@ -235,17 +235,19 @@ class Adaptation(nn.Module):
         return x_ad5
 
 
-class CountEstimate(nn.Module):
+class CountAdapt(nn.Module):
     def __init__(self):
-        super(CountEstimate, self).__init__()
+        super(CountAdapt, self).__init__()
 
         self.downsample = Downsample()
         self.upsample = Upsample()
         self.adapt = Adaptation()
 
     def forward(self, x, grl_lambda=1):
+        # features layers from feature extraction step
         x2, x5, x8, x11 = self.downsample(x)
-        x2 = self.upsample(x11, x2, x5, x8)
-        x3 = self.adapt(x11)
 
-        return x2, x3
+        density_map = self.upsample(x11, x2, x5, x8)
+        class_pred = self.adapt(x11)
+
+        return density_map, class_pred

@@ -27,7 +27,7 @@ class CVPPP(data.Dataset):
 
     def __init__(self, root, train=True, transform=None):
         """Init CVPPP dataset."""
-        # toclarify: do we need this parent initialization? tut7 doesn't have it? Verify later.
+        
         super(CVPPP, self).__init__()
         self.root = os.path.expanduser(root)
         self.transform = transform

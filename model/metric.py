@@ -20,7 +20,29 @@ def top_k_acc(output, target, k=3):
     return correct / len(target)
 
 
-def mse_loss_val(output, target):
-    with torch.no_grad():
-        loss = torch.nn.BCELoss
-    return correct / len(target)
+def percentage_agreement(predict, target):
+    length = float(predict.shape[0])
+    match = 0.0
+
+    for pred, y in zip(predict, target):
+        if pred == y:
+            match += 1.0
+    return match/length
+
+
+def diff_in_count(predict, target):
+    length = float(predict.shape[0])
+    error = 0.0
+
+    for pred, y in zip(predict, target):
+        error += y-pred
+    return error/length
+
+
+def abs_diff_in_count(predict, target):
+    return abs(diff_in_count(predict, target))
+
+
+def mse_loss(predict, target):
+    cost_mse = nn.MSELoss()
+    return cost_mse(predict, target)

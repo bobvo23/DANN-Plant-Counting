@@ -8,7 +8,7 @@
         "args": {}
     },
     "UNET_ADAPT_arch": {
-        "type": "CountEstimate",
+        "type": "CountAdapt",
         "args": {}
     },
     "data_loader_CVPPP": {
@@ -79,7 +79,7 @@
         }
     },
     "trainer": {
-        "epochs": 15,
+        "epochs": 30,
         "save_dir": "saved/",
         "save_period": 2,
         "verbosity": 2,
