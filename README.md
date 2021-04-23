@@ -101,7 +101,8 @@ These are the results for the CVPPP to KOMATSUNA Adaptation:
 | **With Adaptation - from code** | 0.69 | -0.07 | 16.67 | 5.13 |
 
 This is a sample of training image and its dot labels:
-<img src="assets/cvppp_label.png" alt="drawing" width="500" class="center"/>
+
+<img src="assets/cvppp_label.png" alt="drawing" width="500">
 
 ## Acknowledgements:
 
