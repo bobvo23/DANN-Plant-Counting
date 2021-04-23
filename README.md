@@ -5,7 +5,9 @@
 Re-implementation [Report](assets/Final_report_CVDL.pdf)
 
 References:
+
 Original implementation: https://github.com/p2irc/UDA4POC
+
 Paper link: https://arxiv.org/abs/2009.01081
 
 This project is a reproduction of the paper Unsupervised Domain Adaptation For Plant Organs Counting. The paper proposes a domain-adversarial learning approach for domain adaptation in object counting contexts levering the domain-adversarial neural network (DANN) framework.
